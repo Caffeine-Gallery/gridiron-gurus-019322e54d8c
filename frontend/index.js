@@ -7,22 +7,15 @@ let availablePlayers = [];
 async function initializePlayers() {
     showLoading(true);
     try {
-        // Fetch NFL players from a free API
-        const response = await fetch('https://api.sportsdata.io/v3/nfl/scores/json/Players?key=YOUR_API_KEY');
-        const players = await response.json();
-        
-        availablePlayers = players.map(player => ({
-            id: player.PlayerID,
-            name: player.Name,
-            position: player.Position,
-            team: player.Team,
-            salary: Math.floor(Math.random() * 10000) + 3000, // Random salary for demo
-            projectedPoints: parseFloat((Math.random() * 20).toFixed(1))
-        }));
-
+        availablePlayers = await backend.getAvailablePlayers();
         renderPlayers();
     } catch (error) {
         console.error('Error fetching players:', error);
+        document.getElementById('playersList').innerHTML = `
+            <div class="alert alert-danger" role="alert">
+                Failed to load players. Please try again later.
+            </div>
+        `;
     }
     showLoading(false);
 }
@@ -127,15 +120,12 @@ document.getElementById('saveTeam').addEventListener('click', async () => {
     }
 
     try {
-        await backend.saveTeam(currentTeam.map(p => ({
-            id: p.id,
-            name: p.name,
-            position: p.position,
-            team: p.team,
-            salary: p.salary,
-            projectedPoints: p.projectedPoints
-        })));
-        alert('Team saved successfully!');
+        const result = await backend.saveTeam(currentTeam);
+        if (result) {
+            alert('Team saved successfully!');
+        } else {
+            alert('Failed to save team. Please check team composition and salary cap.');
+        }
     } catch (error) {
         console.error('Error saving team:', error);
         alert('Failed to save team. Please try again.');

@@ -10,6 +10,7 @@ type Player =
  };
 service : {
   deleteTeam: () -> (bool);
+  getAvailablePlayers: () -> (vec Player) query;
   getTeam: () -> (opt Team) query;
   saveTeam: (vec Player) -> (bool);
 }

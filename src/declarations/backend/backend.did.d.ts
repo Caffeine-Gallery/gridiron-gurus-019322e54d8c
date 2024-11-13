@@ -13,6 +13,7 @@ export interface Player {
 export type Team = Array<Player>;
 export interface _SERVICE {
   'deleteTeam' : ActorMethod<[], boolean>,
+  'getAvailablePlayers' : ActorMethod<[], Array<Player>>,
   'getTeam' : ActorMethod<[], [] | [Team]>,
   'saveTeam' : ActorMethod<[Array<Player>], boolean>,
 }

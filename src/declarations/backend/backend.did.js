@@ -10,6 +10,7 @@ export const idlFactory = ({ IDL }) => {
   const Team = IDL.Vec(Player);
   return IDL.Service({
     'deleteTeam' : IDL.Func([], [IDL.Bool], []),
+    'getAvailablePlayers' : IDL.Func([], [IDL.Vec(Player)], ['query']),
     'getTeam' : IDL.Func([], [IDL.Opt(Team)], ['query']),
     'saveTeam' : IDL.Func([IDL.Vec(Player)], [IDL.Bool], []),
   });
