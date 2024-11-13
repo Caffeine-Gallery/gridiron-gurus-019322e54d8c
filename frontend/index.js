@@ -4,10 +4,29 @@ const SALARY_CAP = 50000;
 let currentTeam = [];
 let availablePlayers = [];
 
+// Helper function to convert BigInt to Number
+function bigIntToNumber(value) {
+    if (typeof value === 'bigint') {
+        return Number(value);
+    }
+    return value;
+}
+
+// Helper function to convert player data from backend
+function convertPlayer(player) {
+    return {
+        ...player,
+        id: bigIntToNumber(player.id),
+        salary: bigIntToNumber(player.salary),
+        projectedPoints: Number(player.projectedPoints)
+    };
+}
+
 async function initializePlayers() {
     showLoading(true);
     try {
-        availablePlayers = await backend.getAvailablePlayers();
+        const players = await backend.getAvailablePlayers();
+        availablePlayers = players.map(convertPlayer);
         renderPlayers();
     } catch (error) {
         console.error('Error fetching players:', error);
@@ -41,8 +60,8 @@ function createPlayerCard(player) {
                 <h5 class="card-title">${player.name}</h5>
                 <p class="card-text">
                     ${player.position} - ${player.team}<br>
-                    Salary: $${player.salary}<br>
-                    Projected: ${player.projectedPoints} pts
+                    Salary: $${player.salary.toLocaleString()}<br>
+                    Projected: ${player.projectedPoints.toFixed(1)} pts
                 </p>
                 <button class="btn btn-success btn-sm add-player" data-id="${player.id}">Add to Team</button>
             </div>
@@ -59,7 +78,7 @@ function addToTeam(player) {
         return;
     }
 
-    const totalSalary = currentTeam.reduce((sum, p) => sum + p.salary, 0) + player.salary;
+    const totalSalary = currentTeam.reduce((sum, p) => sum + Number(p.salary), 0) + Number(player.salary);
     if (totalSalary > SALARY_CAP) {
         alert('Exceeds salary cap!');
         return;
@@ -86,8 +105,8 @@ function updateTeamDisplay() {
         teamElement.appendChild(div);
     });
 
-    const totalSalary = currentTeam.reduce((sum, p) => sum + p.salary, 0);
-    salaryElement.innerHTML = `Total Salary: $${totalSalary} / $${SALARY_CAP}`;
+    const totalSalary = currentTeam.reduce((sum, p) => sum + Number(p.salary), 0);
+    salaryElement.innerHTML = `Total Salary: $${totalSalary.toLocaleString()} / $${SALARY_CAP.toLocaleString()}`;
 }
 
 function removeFromTeam(playerId) {
