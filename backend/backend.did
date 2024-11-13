@@ -1,0 +1,15 @@
+type Team = vec Player;
+type Player = 
+ record {
+   id: nat;
+   name: text;
+   position: text;
+   projectedPoints: float64;
+   salary: nat;
+   team: text;
+ };
+service : {
+  deleteTeam: () -> (bool);
+  getTeam: () -> (opt Team) query;
+  saveTeam: (vec Player) -> (bool);
+}
