@@ -13,7 +13,14 @@ import Iter "mo:base/Iter";
 import Buffer "mo:base/Buffer";
 
 actor {
-    // Types
+    // Type definitions must come first
+    public type PlayerStats = {
+        points: Nat;
+        gamesPlayed: Nat;
+        touchdowns: Nat;
+        yards: Nat;
+    };
+
     public type Player = {
         id: Nat;
         name: Text;
@@ -22,13 +29,6 @@ actor {
         salary: Nat;
         projectedPoints: Float;
         stats: ?PlayerStats;
-    };
-
-    public type PlayerStats = {
-        points: Nat;
-        gamesPlayed: Nat;
-        touchdowns: Nat;
-        yards: Nat;
     };
 
     public type Team = {
@@ -48,7 +48,7 @@ actor {
         commissioner: Principal;
         draftDate: Int;
         teamCount: Nat;
-        status: Text; // "pre-draft", "drafting", "in-season", "completed"
+        status: Text;
     };
 
     public type Matchup = {
@@ -58,10 +58,10 @@ actor {
         awayTeam: Team;
         homeScore: Float;
         awayScore: Float;
-        status: Text; // "scheduled", "in-progress", "completed"
+        status: Text;
     };
 
-    // State
+    // State variables
     private stable var nextPlayerId: Nat = 1;
     private stable var nextTeamId: Nat = 1;
     private stable var nextLeagueId: Nat = 1;
@@ -100,7 +100,22 @@ actor {
         Buffer.toArray(userLeagues)
     };
 
-    // Team Management
+    public query(msg) func getTeam() : async ?Team {
+        let userTeams = Buffer.Buffer<Team>(0);
+        for ((_, league) in leagues.entries()) {
+            for (team in league.teams.vals()) {
+                if (team.owner == msg.caller) {
+                    userTeams.add(team);
+                };
+            };
+        };
+        if (userTeams.size() > 0) {
+            ?userTeams.get(0)
+        } else {
+            null
+        }
+    };
+
     public shared(msg) func createTeam(name: Text, leagueId: Nat) : async ?Team {
         let league = leagues.get(leagueId);
         switch (league) {
@@ -136,47 +151,35 @@ actor {
         }
     };
 
-    public query(msg) func getUserTeams() : async [Team] {
-        let userTeams = Buffer.Buffer<Team>(0);
-        for ((_, league) in leagues.entries()) {
-            for (team in league.teams.vals()) {
-                if (team.owner == msg.caller) {
-                    userTeams.add(team);
-                };
-            };
-        };
-        Buffer.toArray(userTeams)
-    };
-
-    // Player Management
     public query func getAvailablePlayers() : async [Player] {
         Iter.toArray(players.vals())
     };
 
-    // Matchup Management
-    public query(msg) func getCurrentMatchup() : async ?Matchup {
-        // In a real implementation, this would check the current week
-        // and return the user's active matchup
+    public query func getCurrentMatchup() : async ?Matchup {
         null
     };
 
-    // League Standings
-    public query func getLeagueStandings(leagueId: Nat) : async ?[Team] {
-        let league = leagues.get(leagueId);
-        switch (league) {
+    public query func getLeagueStandings(leagueId: ?Nat) : async ?[Team] {
+        switch (leagueId) {
             case (null) { null };
-            case (?l) {
-                let sortedTeams = Array.sort<Team>(
-                    l.teams,
-                    func(a, b) {
-                        if (a.wins > b.wins) #less
-                        else if (a.wins < b.wins) #greater
-                        else if (a.points > b.points) #less
-                        else if (a.points < b.points) #greater
-                        else #equal
-                    }
-                );
-                ?sortedTeams
+            case (?id) {
+                let league = leagues.get(id);
+                switch (league) {
+                    case (null) { null };
+                    case (?l) {
+                        let sortedTeams = Array.sort<Team>(
+                            l.teams,
+                            func(a, b) {
+                                if (a.wins > b.wins) #less
+                                else if (a.wins < b.wins) #greater
+                                else if (a.points > b.points) #less
+                                else if (a.points < b.points) #greater
+                                else #equal
+                            }
+                        );
+                        ?sortedTeams
+                    };
+                }
             };
         }
     };
@@ -189,4 +192,4 @@ actor {
     system func postupgrade() {
         // Implementation for data recovery
     };
-};
+}

@@ -52,9 +52,9 @@ export interface _SERVICE {
   'createTeam' : ActorMethod<[string, bigint], [] | [Team]>,
   'getAvailablePlayers' : ActorMethod<[], Array<Player>>,
   'getCurrentMatchup' : ActorMethod<[], [] | [Matchup]>,
-  'getLeagueStandings' : ActorMethod<[bigint], [] | [Array<Team>]>,
+  'getLeagueStandings' : ActorMethod<[[] | [bigint]], [] | [Array<Team>]>,
+  'getTeam' : ActorMethod<[], [] | [Team]>,
   'getUserLeagues' : ActorMethod<[], Array<League>>,
-  'getUserTeams' : ActorMethod<[], Array<Team>>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

@@ -54,7 +54,7 @@ service : {
   createTeam: (text, nat) -> (opt Team);
   getAvailablePlayers: () -> (vec Player) query;
   getCurrentMatchup: () -> (opt Matchup) query;
-  getLeagueStandings: (nat) -> (opt vec Team) query;
+  getLeagueStandings: (opt nat) -> (opt vec Team) query;
+  getTeam: () -> (opt Team) query;
   getUserLeagues: () -> (vec League) query;
-  getUserTeams: () -> (vec Team) query;
 }

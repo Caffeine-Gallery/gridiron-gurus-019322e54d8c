@@ -57,12 +57,12 @@ export const idlFactory = ({ IDL }) => {
     'getAvailablePlayers' : IDL.Func([], [IDL.Vec(Player)], ['query']),
     'getCurrentMatchup' : IDL.Func([], [IDL.Opt(Matchup)], ['query']),
     'getLeagueStandings' : IDL.Func(
-        [IDL.Nat],
+        [IDL.Opt(IDL.Nat)],
         [IDL.Opt(IDL.Vec(Team))],
         ['query'],
       ),
+    'getTeam' : IDL.Func([], [IDL.Opt(Team)], ['query']),
     'getUserLeagues' : IDL.Func([], [IDL.Vec(League)], ['query']),
-    'getUserTeams' : IDL.Func([], [IDL.Vec(Team)], ['query']),
   });
 };
 export const init = ({ IDL }) => { return []; };
