@@ -41,9 +41,7 @@ function setupAuthListeners() {
             const nanoseconds = BigInt(3600000000000);
             
             await authClient.login({
-                identityProvider: process.env.DFX_NETWORK === "ic" 
-                    ? "https://identity.ic0.app"
-                    : `http://localhost:4943/?canisterId=${process.env.CANISTER_ID_INTERNET_IDENTITY}`,
+                identityProvider: "https://identity.ic0.app",
                 maxTimeToLive: days * hours * nanoseconds,
                 onSuccess: async () => {
                     identity = await authClient.getIdentity();
@@ -81,13 +79,7 @@ function handleAuthenticated() {
         
         // Update the agent's identity
         const agent = new HttpAgent({ identity });
-        if (process.env.DFX_NETWORK !== "ic") {
-            agent.fetchRootKey().catch(err => {
-                console.warn("Unable to fetch root key. Check to ensure that your local replica is running");
-                console.error(err);
-            });
-        }
-
+        
         loadUserData();
     } catch (error) {
         console.error("Error handling authentication:", error);
