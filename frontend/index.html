@@ -3,46 +3,169 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fantasy Football Draft</title>
+    <title>Fantasy Football League</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
     <link rel="stylesheet" href="index.css">
 </head>
 <body>
-    <nav class="navbar navbar-dark bg-dark">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
-            <span class="navbar-brand mb-0 h1">Fantasy Football Draft</span>
+            <a class="navbar-brand" href="#">Fantasy Football League</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-page="dashboard">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-page="leagues">My Leagues</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-page="team">My Team</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-page="players">Players</a>
+                    </li>
+                </ul>
+                <div class="d-flex">
+                    <button id="loginButton" class="btn btn-outline-light">Login</button>
+                    <button id="logoutButton" class="btn btn-outline-light ms-2 d-none">Logout</button>
+                </div>
+            </div>
         </div>
     </nav>
 
     <div class="container mt-4">
-        <div class="row">
-            <div class="col-md-8">
-                <div class="card">
-                    <div class="card-header">
-                        <h5>Available Players</h5>
-                        <input type="text" id="playerSearch" class="form-control" placeholder="Search players...">
+        <!-- Login Message -->
+        <div id="loginMessage" class="alert alert-info text-center">
+            Please login to access the fantasy football league
+        </div>
+
+        <!-- Main Content Area -->
+        <div id="mainContent" class="d-none">
+            <!-- Dashboard -->
+            <div id="dashboard" class="content-page">
+                <h2>Dashboard</h2>
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Current Matchup</h5>
+                            </div>
+                            <div class="card-body" id="currentMatchup">
+                                Loading matchup...
+                            </div>
+                        </div>
                     </div>
-                    <div class="card-body">
-                        <div id="playersList" class="row"></div>
-                        <div id="loadingPlayers" class="text-center d-none">
-                            <div class="spinner-border" role="status">
-                                <span class="visually-hidden">Loading...</span>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>League Standings</h5>
+                            </div>
+                            <div class="card-body" id="leagueStandings">
+                                Loading standings...
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h5>My Team</h5>
+            <!-- Leagues -->
+            <div id="leagues" class="content-page d-none">
+                <h2>My Leagues</h2>
+                <div class="row mt-4">
+                    <div class="col-md-12 mb-3">
+                        <button class="btn btn-primary" id="createLeagueBtn">Create New League</button>
                     </div>
-                    <div class="card-body">
-                        <div id="myTeam"></div>
-                        <div id="teamSalary" class="mt-3"></div>
-                        <button id="saveTeam" class="btn btn-primary mt-3">Save Team</button>
+                    <div class="col-md-12">
+                        <div id="leaguesList"></div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Team Management -->
+            <div id="team" class="content-page d-none">
+                <h2>My Team</h2>
+                <div class="row mt-4">
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Current Roster</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="teamRoster"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Team Stats</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="teamStats"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Players -->
+            <div id="players" class="content-page d-none">
+                <h2>Players</h2>
+                <div class="row mt-4">
+                    <div class="col-md-12 mb-3">
+                        <input type="text" id="playerSearch" class="form-control" placeholder="Search players...">
+                        <div class="btn-group mt-2">
+                            <button class="btn btn-outline-secondary" data-position="ALL">All</button>
+                            <button class="btn btn-outline-secondary" data-position="QB">QB</button>
+                            <button class="btn btn-outline-secondary" data-position="RB">RB</button>
+                            <button class="btn btn-outline-secondary" data-position="WR">WR</button>
+                            <button class="btn btn-outline-secondary" data-position="TE">TE</button>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div id="playersList" class="row"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal fade" id="createLeagueModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Create New League</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="createLeagueForm">
+                        <div class="mb-3">
+                            <label class="form-label">League Name</label>
+                            <input type="text" class="form-control" id="leagueName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Number of Teams</label>
+                            <select class="form-control" id="teamCount">
+                                <option value="8">8</option>
+                                <option value="10">10</option>
+                                <option value="12">12</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Draft Date</label>
+                            <input type="datetime-local" class="form-control" id="draftDate" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="createLeagueSubmit">Create League</button>
                 </div>
             </div>
         </div>

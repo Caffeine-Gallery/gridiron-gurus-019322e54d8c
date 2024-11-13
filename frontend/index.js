@@ -1,155 +1,215 @@
+import { AuthClient } from "@dfinity/auth-client";
 import { backend } from "declarations/backend";
 
-const SALARY_CAP = 50000;
-let currentTeam = [];
+// Auth Client
+let authClient;
+let identity = null;
+
+// State Management
+let currentPage = 'dashboard';
+let currentLeague = null;
+let myTeams = [];
 let availablePlayers = [];
 
-// Helper function to convert BigInt to Number
+// Helper Functions
 function bigIntToNumber(value) {
-    if (typeof value === 'bigint') {
-        return Number(value);
-    }
-    return value;
+    return typeof value === 'bigint' ? Number(value) : value;
 }
 
-// Helper function to convert player data from backend
 function convertPlayer(player) {
     return {
         ...player,
         id: bigIntToNumber(player.id),
         salary: bigIntToNumber(player.salary),
-        projectedPoints: Number(player.projectedPoints)
+        projectedPoints: Number(player.projectedPoints),
+        stats: player.stats ? {
+            ...player.stats,
+            points: bigIntToNumber(player.stats.points)
+        } : null
     };
 }
 
-async function initializePlayers() {
-    showLoading(true);
+// Authentication
+async function initAuth() {
+    authClient = await AuthClient.create();
+    if (await authClient.isAuthenticated()) {
+        identity = await authClient.getIdentity();
+        handleAuthenticated();
+    }
+    setupAuthListeners();
+}
+
+function setupAuthListeners() {
+    document.getElementById('loginButton').onclick = async () => {
+        await authClient.login({
+            identityProvider: "https://identity.ic0.app",
+            onSuccess: handleAuthenticated
+        });
+    };
+
+    document.getElementById('logoutButton').onclick = async () => {
+        await authClient.logout();
+        handleUnauthenticated();
+    };
+}
+
+function handleAuthenticated() {
+    document.getElementById('loginMessage').classList.add('d-none');
+    document.getElementById('mainContent').classList.remove('d-none');
+    document.getElementById('loginButton').classList.add('d-none');
+    document.getElementById('logoutButton').classList.remove('d-none');
+    loadUserData();
+}
+
+function handleUnauthenticated() {
+    document.getElementById('loginMessage').classList.remove('d-none');
+    document.getElementById('mainContent').classList.add('d-none');
+    document.getElementById('loginButton').classList.remove('d-none');
+    document.getElementById('logoutButton').classList.add('d-none');
+}
+
+// Navigation
+function setupNavigation() {
+    document.querySelectorAll('[data-page]').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            navigateToPage(e.target.dataset.page);
+        });
+    });
+}
+
+function navigateToPage(page) {
+    document.querySelectorAll('.content-page').forEach(p => p.classList.add('d-none'));
+    document.getElementById(page).classList.remove('d-none');
+    currentPage = page;
+    loadPageData(page);
+}
+
+// Data Loading
+async function loadUserData() {
+    try {
+        const [leagues, teams] = await Promise.all([
+            backend.getUserLeagues(),
+            backend.getUserTeams()
+        ]);
+        myTeams = teams.map(convertTeam);
+        renderLeagues(leagues);
+        loadPageData(currentPage);
+    } catch (error) {
+        console.error('Error loading user data:', error);
+    }
+}
+
+async function loadPageData(page) {
+    switch (page) {
+        case 'dashboard':
+            await loadDashboard();
+            break;
+        case 'leagues':
+            await loadLeagues();
+            break;
+        case 'team':
+            await loadTeam();
+            break;
+        case 'players':
+            await loadPlayers();
+            break;
+    }
+}
+
+// Dashboard
+async function loadDashboard() {
+    try {
+        const [matchup, standings] = await Promise.all([
+            backend.getCurrentMatchup(),
+            backend.getLeagueStandings(currentLeague)
+        ]);
+        renderMatchup(matchup);
+        renderStandings(standings);
+    } catch (error) {
+        console.error('Error loading dashboard:', error);
+    }
+}
+
+// Leagues
+async function loadLeagues() {
+    try {
+        const leagues = await backend.getUserLeagues();
+        renderLeagues(leagues);
+    } catch (error) {
+        console.error('Error loading leagues:', error);
+    }
+}
+
+// Team Management
+async function loadTeam() {
+    try {
+        const team = await backend.getTeam();
+        if (team) {
+            renderTeam(team);
+        }
+    } catch (error) {
+        console.error('Error loading team:', error);
+    }
+}
+
+// Players
+async function loadPlayers() {
     try {
         const players = await backend.getAvailablePlayers();
         availablePlayers = players.map(convertPlayer);
         renderPlayers();
     } catch (error) {
-        console.error('Error fetching players:', error);
-        document.getElementById('playersList').innerHTML = `
-            <div class="alert alert-danger" role="alert">
-                Failed to load players. Please try again later.
-            </div>
-        `;
+        console.error('Error loading players:', error);
     }
-    showLoading(false);
 }
 
-function renderPlayers() {
-    const playersListElement = document.getElementById('playersList');
-    playersListElement.innerHTML = '';
+// Event Listeners
+function setupEventListeners() {
+    // Create League
+    document.getElementById('createLeagueBtn').addEventListener('click', () => {
+        const modal = new bootstrap.Modal(document.getElementById('createLeagueModal'));
+        modal.show();
+    });
 
-    availablePlayers.forEach(player => {
-        if (!currentTeam.find(p => p.id === player.id)) {
-            const playerCard = createPlayerCard(player);
-            playersListElement.appendChild(playerCard);
+    document.getElementById('createLeagueSubmit').addEventListener('click', async () => {
+        const name = document.getElementById('leagueName').value;
+        const teamCount = parseInt(document.getElementById('teamCount').value);
+        const draftDate = new Date(document.getElementById('draftDate').value).getTime();
+
+        try {
+            await backend.createLeague({
+                name,
+                teamCount,
+                draftDate: BigInt(draftDate)
+            });
+            loadLeagues();
+            bootstrap.Modal.getInstance(document.getElementById('createLeagueModal')).hide();
+        } catch (error) {
+            console.error('Error creating league:', error);
+            alert('Failed to create league. Please try again.');
         }
+    });
+
+    // Player Search
+    document.getElementById('playerSearch').addEventListener('input', (e) => {
+        filterPlayers(e.target.value);
+    });
+
+    // Position Filters
+    document.querySelectorAll('[data-position]').forEach(button => {
+        button.addEventListener('click', (e) => {
+            filterPlayersByPosition(e.target.dataset.position);
+        });
     });
 }
 
-function createPlayerCard(player) {
-    const div = document.createElement('div');
-    div.className = 'col-md-6 mb-3';
-    div.innerHTML = `
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">${player.name}</h5>
-                <p class="card-text">
-                    ${player.position} - ${player.team}<br>
-                    Salary: $${player.salary.toLocaleString()}<br>
-                    Projected: ${player.projectedPoints.toFixed(1)} pts
-                </p>
-                <button class="btn btn-success btn-sm add-player" data-id="${player.id}">Add to Team</button>
-            </div>
-        </div>
-    `;
-
-    div.querySelector('.add-player').addEventListener('click', () => addToTeam(player));
-    return div;
+// Initialize Application
+async function init() {
+    await initAuth();
+    setupNavigation();
+    setupEventListeners();
 }
 
-function addToTeam(player) {
-    if (currentTeam.length >= 9) {
-        alert('Team is full! (Max 9 players)');
-        return;
-    }
-
-    const totalSalary = currentTeam.reduce((sum, p) => sum + Number(p.salary), 0) + Number(player.salary);
-    if (totalSalary > SALARY_CAP) {
-        alert('Exceeds salary cap!');
-        return;
-    }
-
-    currentTeam.push(player);
-    updateTeamDisplay();
-    renderPlayers();
-}
-
-function updateTeamDisplay() {
-    const teamElement = document.getElementById('myTeam');
-    const salaryElement = document.getElementById('teamSalary');
-    
-    teamElement.innerHTML = '';
-    currentTeam.forEach(player => {
-        const div = document.createElement('div');
-        div.className = 'mb-2 d-flex justify-content-between align-items-center';
-        div.innerHTML = `
-            <span>${player.name} (${player.position})</span>
-            <button class="btn btn-danger btn-sm" data-id="${player.id}">Remove</button>
-        `;
-        div.querySelector('button').addEventListener('click', () => removeFromTeam(player.id));
-        teamElement.appendChild(div);
-    });
-
-    const totalSalary = currentTeam.reduce((sum, p) => sum + Number(p.salary), 0);
-    salaryElement.innerHTML = `Total Salary: $${totalSalary.toLocaleString()} / $${SALARY_CAP.toLocaleString()}`;
-}
-
-function removeFromTeam(playerId) {
-    currentTeam = currentTeam.filter(p => p.id !== playerId);
-    updateTeamDisplay();
-    renderPlayers();
-}
-
-function showLoading(show) {
-    document.getElementById('loadingPlayers').classList.toggle('d-none', !show);
-}
-
-document.getElementById('playerSearch').addEventListener('input', (e) => {
-    const searchTerm = e.target.value.toLowerCase();
-    availablePlayers.forEach(player => {
-        const card = document.querySelector(`[data-id="${player.id}"]`)?.closest('.col-md-6');
-        if (card) {
-            const visible = player.name.toLowerCase().includes(searchTerm) || 
-                           player.team.toLowerCase().includes(searchTerm) ||
-                           player.position.toLowerCase().includes(searchTerm);
-            card.style.display = visible ? 'block' : 'none';
-        }
-    });
-});
-
-document.getElementById('saveTeam').addEventListener('click', async () => {
-    if (currentTeam.length < 9) {
-        alert('Please select 9 players for your team!');
-        return;
-    }
-
-    try {
-        const result = await backend.saveTeam(currentTeam);
-        if (result) {
-            alert('Team saved successfully!');
-        } else {
-            alert('Failed to save team. Please check team composition and salary cap.');
-        }
-    } catch (error) {
-        console.error('Error saving team:', error);
-        alert('Failed to save team. Please try again.');
-    }
-});
-
-// Initialize the app
-initializePlayers();
+// Start the application
+init();
