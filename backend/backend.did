@@ -1,60 +1,23 @@
-type Team = 
+type Standing = 
  record {
-   id: nat;
    losses: nat;
-   name: text;
-   owner: principal;
-   players: vec Player;
-   points: float64;
+   points: nat;
+   teamId: nat;
    wins: nat;
  };
-type PlayerStats = 
- record {
-   gamesPlayed: nat;
-   points: nat;
-   touchdowns: nat;
-   yards: nat;
- };
-type Player = 
- record {
-   id: nat;
-   name: text;
-   position: text;
-   projectedPoints: float64;
-   salary: nat;
-   stats: opt PlayerStats;
-   team: text;
+type Result = 
+ variant {
+   err: text;
+   ok: vec Standing;
  };
 type Matchup = 
  record {
-   awayScore: float64;
-   awayTeam: Team;
-   homeScore: float64;
-   homeTeam: Team;
-   id: nat;
-   status: text;
-   week: nat;
- };
-type League = 
- record {
-   commissioner: principal;
-   draftDate: int;
-   id: nat;
-   name: text;
-   status: text;
-   teamCount: nat;
-   teams: vec Team;
+   awayScore: nat;
+   awayTeamId: nat;
+   homeScore: nat;
+   homeTeamId: nat;
  };
 service : {
-  createLeague: (record {
-                   draftDate: int;
-                   name: text;
-                   teamCount: nat;
-                 }) -> (nat);
-  createTeam: (text, nat) -> (opt Team);
-  getAvailablePlayers: () -> (vec Player) query;
   getCurrentMatchup: () -> (opt Matchup) query;
-  getLeagueStandings: (opt nat) -> (opt vec Team) query;
-  getTeam: () -> (opt Team) query;
-  getUserLeagues: () -> (vec League) query;
+  getLeagueStandings: (opt nat) -> (Result) query;
 }

@@ -1,106 +1,26 @@
-.content-page {
-    animation: fadeIn 0.3s ease-in;
+.standing-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px;
+    border-bottom: 1px solid #eee;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+.matchup-container {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 20px;
 }
 
-.card {
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    margin-bottom: 1rem;
+.team {
+    text-align: center;
 }
 
-.card-header {
-    background-color: #f8f9fa;
-    border-bottom: 1px solid rgba(0,0,0,0.125);
-}
-
-.player-card {
-    transition: transform 0.2s;
-}
-
-.player-card:hover {
-    transform: translateY(-2px);
-}
-
-.btn-group {
-    gap: 0.25rem;
-}
-
-.navbar {
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.table-standings {
-    font-size: 0.9rem;
-}
-
-.table-standings th {
-    background-color: #f8f9fa;
-}
-
-.player-stats {
-    font-size: 0.8rem;
+.vs {
+    font-weight: bold;
     color: #666;
 }
 
-.roster-player {
-    padding: 0.5rem;
-    border-bottom: 1px solid #eee;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.roster-player:last-child {
-    border-bottom: none;
-}
-
-.position-filter {
-    margin-right: 0.5rem;
-}
-
-.loading-spinner {
-    display: inline-block;
-    width: 1rem;
-    height: 1rem;
-    border: 2px solid #f3f3f3;
-    border-top: 2px solid #3498db;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-.score-change {
-    animation: scoreUpdate 1s ease-in-out;
-}
-
-@keyframes scoreUpdate {
-    0% { background-color: #ffd700; }
-    100% { background-color: transparent; }
-}
-
-.league-card {
-    cursor: pointer;
-    transition: transform 0.2s;
-}
-
-.league-card:hover {
-    transform: translateY(-2px);
-}
-
-@media (max-width: 768px) {
-    .btn-group {
-        flex-wrap: wrap;
-    }
-    
-    .position-filter {
-        margin-bottom: 0.5rem;
-    }
+.alert {
+    margin-bottom: 1rem;
 }
