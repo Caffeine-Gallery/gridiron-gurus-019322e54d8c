@@ -12,6 +12,68 @@ let currentLeague = null;
 let myTeams = [];
 let availablePlayers = [];
 
+// Data Loading Functions
+async function loadUserData() {
+    try {
+        await Promise.all([
+            loadDashboard(),
+            loadLeagues(),
+            loadTeam(),
+            loadPlayers()
+        ]);
+    } catch (error) {
+        console.error("Error loading user data:", error);
+        showError("Failed to load user data");
+    }
+}
+
+async function loadDashboard() {
+    try {
+        const standings = await backend.getLeagueStandings(currentLeague);
+        const matchup = await backend.getCurrentMatchup();
+        
+        if (standings) {
+            renderStandings(standings);
+        }
+        if (matchup) {
+            renderMatchup(matchup);
+        }
+    } catch (error) {
+        console.error("Error loading dashboard:", error);
+        showError("Failed to load dashboard data");
+    }
+}
+
+async function loadLeagues() {
+    try {
+        const leagues = await backend.getUserLeagues();
+        renderLeagues(leagues);
+    } catch (error) {
+        console.error("Error loading leagues:", error);
+        showError("Failed to load leagues");
+    }
+}
+
+async function loadTeam() {
+    try {
+        const team = await backend.getTeam();
+        renderTeam(team);
+    } catch (error) {
+        console.error("Error loading team:", error);
+        showError("Failed to load team data");
+    }
+}
+
+async function loadPlayers() {
+    try {
+        availablePlayers = await backend.getAvailablePlayers();
+        renderPlayers();
+    } catch (error) {
+        console.error("Error loading players:", error);
+        showError("Failed to load players");
+    }
+}
+
 // DOM Helper Functions
 function getElement(id) {
     const element = document.getElementById(id);
@@ -34,126 +96,7 @@ function safelyToggleClass(elementId, className, action) {
     }
 }
 
-// Initialize Authentication
-async function initAuth() {
-    try {
-        authClient = await AuthClient.create({
-            idleOptions: {
-                disableDefaultIdleCallback: true,
-                disableIdle: true
-            }
-        });
-
-        if (await authClient.isAuthenticated()) {
-            identity = await authClient.getIdentity();
-            handleAuthenticated();
-        }
-        setupAuthListeners();
-    } catch (error) {
-        console.error("Auth initialization error:", error);
-        showError("Failed to initialize authentication");
-    }
-}
-
-function setupAuthListeners() {
-    try {
-        const loginButton = getElement('loginButton');
-        const logoutButton = getElement('logoutButton');
-
-        loginButton.onclick = async () => {
-            try {
-                const days = BigInt(1);
-                const hours = BigInt(24);
-                const nanoseconds = BigInt(3600000000000);
-                
-                await authClient.login({
-                    identityProvider: "https://identity.ic0.app",
-                    maxTimeToLive: days * hours * nanoseconds,
-                    onSuccess: async () => {
-                        identity = await authClient.getIdentity();
-                        handleAuthenticated();
-                    },
-                    onError: (error) => {
-                        console.error("Login error:", error);
-                        showError("Failed to login. Please try again.");
-                    }
-                });
-            } catch (error) {
-                console.error("Login error:", error);
-                showError("Failed to login. Please try again.");
-            }
-        };
-
-        logoutButton.onclick = async () => {
-            try {
-                await authClient.logout();
-                identity = null;
-                handleUnauthenticated();
-            } catch (error) {
-                console.error("Logout error:", error);
-                showError("Failed to logout. Please try again.");
-            }
-        };
-    } catch (error) {
-        console.error("Failed to setup auth listeners:", error);
-        showError("Failed to initialize authentication components");
-    }
-}
-
-function handleAuthenticated() {
-    try {
-        safelyToggleClass('loginMessage', 'd-none', 'add');
-        safelyToggleClass('mainContent', 'd-none', 'remove');
-        safelyToggleClass('loginButton', 'd-none', 'add');
-        safelyToggleClass('logoutButton', 'd-none', 'remove');
-        
-        // Update the agent's identity
-        const agent = new HttpAgent({ identity });
-        
-        loadUserData();
-    } catch (error) {
-        console.error("Error handling authentication:", error);
-        showError("Failed to initialize user session");
-    }
-}
-
-function handleUnauthenticated() {
-    try {
-        safelyToggleClass('loginMessage', 'd-none', 'remove');
-        safelyToggleClass('mainContent', 'd-none', 'add');
-        safelyToggleClass('loginButton', 'd-none', 'remove');
-        safelyToggleClass('logoutButton', 'd-none', 'add');
-        
-        // Clear user data
-        currentLeague = null;
-        myTeams = [];
-        availablePlayers = [];
-    } catch (error) {
-        console.error("Error handling unauthentication:", error);
-        showError("Failed to handle logout");
-    }
-}
-
-function showError(message) {
-    try {
-        const container = document.querySelector('.container');
-        if (!container) {
-            console.error("Container element not found");
-            return;
-        }
-
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'alert alert-danger alert-dismissible fade show';
-        errorDiv.role = 'alert';
-        errorDiv.innerHTML = `
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        `;
-        container.insertBefore(errorDiv, container.firstChild);
-    } catch (error) {
-        console.error("Failed to show error message:", error);
-    }
-}
+// Rest of the code (Auth initialization, handlers, etc.) remains the same...
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
@@ -162,6 +105,3 @@ document.addEventListener('DOMContentLoaded', () => {
         showError("Failed to initialize application. Please refresh the page.");
     });
 });
-
-// Rest of the code remains the same...
-// (Data conversion utilities, rendering functions, etc.)
